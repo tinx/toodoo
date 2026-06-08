@@ -62,4 +62,29 @@ Of the top of my head, here is what we should look at:
  * secret management
  * acceptance criteria
  * task comments and/or notes
+ * code coverage
+ * concurrency testing
+ * locking logic verification
+ * gerkin specs
+
+## AI Tooling
+
+ * Skills
+   * Dependency Updates, including Golang (do we need AI for this?)
+   * Run tests (do we need AI for this?)
+   * Build everything (do we need AI for this?)
+   * Checklist for commits (tests ran, documentation is updated, version is bumbed, backwards compatiblity, ...) (do we need AI for this?)
+   * Bundle a release and publish (do we need AI for this?)
+   * Security analysis, including CVE scan (do we need AI for this?)
+   * Documentation Review
+   * Search for missing tests
+   * Spec vs Code Comparer
+ * Agents
+   * Architect discussion partner
+   * Security analyst
+   * Quality Assurance engineer
+   * Technical Writer
+ * Bots
+   * Daily Maintenance
+   * 
 
