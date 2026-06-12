@@ -29,6 +29,6 @@ component and unit tests.
 
 This project is in a monorepo. The repo contains code for all related services,
 build, test and deployment scripts, frontend, backend and tooling, all in one
-place. This make it easier to make changes that touch more than one component
+place. This makes it easier to make changes that touch more than one component
 and keeps everything neatly together in one place.
 

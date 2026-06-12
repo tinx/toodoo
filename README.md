@@ -18,9 +18,9 @@ My personal ToDo service, intended for multi-context work and MCP integration
  * TooDoo TLS Signer service (privilege separation, keep TLS private key safe)
  * TooDoo Authenticator service (establish user identity, trigger IP bans)
  * TooDoo Fail2Ban helpers (configures a packet filter to temporarily ban IPs)
- * TooDoo Task service
- * TooDoo MCP server
+ * TooDoo Engine
  * TooDoo CLI client
+ * TooDoo Web Frontend
  * build scripts for all artefacts
  * backup and restore scripts
  * update scripts
@@ -91,7 +91,7 @@ do its job in blocking IPs with too many failed authentication attempts.
 In this part of the project we manage the Fail2Ban config and the
 necessary filters for understanding the TooDoo Authenticator log files.
 
-## TooDoo Task Service
+## TooDoo Engine
 
 This implements the core functionality of this project: task management.
 
@@ -99,9 +99,26 @@ Here we keep track of tasks, implement CRUD functionality and additional
 features such as priorities, labels, grouping, comments and more. It can
 be thought of as a "poor man's ticket management system".
 
-We include integration support for AI assistance feature, such as
+We include integration support for AI assistance features, such as
 automatic task classification, priority assessment, task curation,
 summaries, etc. These AI features require an LLM to work, which is not
 part of this project, but can be configured to enable the AI features.
 
+The Task Service has two APIs: a REST API and an MCP interface.
+
+## TooDoo CLI Clint
+
+The CLI client is meant for working with TooDoo task management via the
+command line. It is also the basis for automated testing of TooDoo,
+so it needs to be feature complete.
+
+The client support humans working on the command line, but also supports
+JSON input and output for scripting.
+
+## TooDoo Web Frontend
+
+This is a single-page app for managing TooDoo tickets. Meant to work well
+on a desktop and on smartphone screens, the focus is on being fast to
+download and fast to use. It also avoids external dependencies where
+possible, which also helps with privacy.
 
