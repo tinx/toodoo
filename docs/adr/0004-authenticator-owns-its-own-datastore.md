@@ -173,8 +173,11 @@ operator-/user-initiated, never per-request:
 - **Signup (invite redemption)**:
   1. User presents invite token + chosen handle + display_name + password.
   2. Authenticator validates the invite token in its own DB.
-  3. Authenticator asks Engine over its admin socket: "create user
-     with handle=X, display_name=Y" → Engine returns `user_id`.
+  3. Authenticator asks Engine via an internal RPC (`POST
+     /internal/users` over the existing Authenticator→Engine socket;
+     see `docs/specs/authentication.md`, Cross-Service RPCs):
+     "create user with handle=X, display_name=Y" → Engine returns
+     `user_id`.
   4. Authenticator creates an `identities` row (`kind='local'`,
      `user_id`), a `local_credentials` row, marks the invite
      redeemed, and issues a session.
@@ -233,7 +236,8 @@ operator-/user-initiated, never per-request:
   with safe partial-failure semantics. The complexity is real but
   contained, and the operations are rare.
 - **Two databases to back up**, not one. The `toodoo-backup` CLI
-  must snapshot both via their respective admin sockets and include
+  must snapshot both via their respective backup sockets
+  (`backup.sock`, group `toodoo-backup` — see ADR 0006) and include
   both in the backup tar. See `docs/specs/backup-restore.md` (to be
   written).
 - **Two schema versions to migrate independently.** Each service

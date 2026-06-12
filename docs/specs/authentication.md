@@ -318,10 +318,18 @@ presented one, returns the new token. Backing for
   hashes are transparently re-hashed at next successful login when
   parameters change.
 
-## Admin Socket
+## Admin and Backup Sockets
 
-A second Unix socket (`SocketMode=0600`, root-only — distinct from
-the Listener-facing socket), consumed by the `toodoo` host CLI:
+Per ADR 0006, application administration does **not** require root.
+The Authenticator exposes two additional Unix sockets, distinct from
+the Listener-facing socket, guarded by static Unix groups created by
+the package (same filesystem-permission boundary as the
+`toodoo-ipc-*` sockets):
+
+### admin.sock (`SocketGroup=toodoo-admin`, `SocketMode=0660`)
+
+Consumed by the `toodoo` host CLI; any local user in `toodoo-admin`
+can run these (granted once via `usermod -aG toodoo-admin <user>`):
 
 - `invite create [--note ...] [--expires-in 7d]` → prints the
   plaintext invite token once.
@@ -333,12 +341,26 @@ the Listener-facing socket), consumed by the `toodoo` host CLI:
   temporary password, prints it once, sets `must_change = 1`,
   revokes all sessions of that user.
 - `sessions revoke --user <handle>` — bulk revoke.
-- `backup` — streams a consistent snapshot of `auth.sqlite` (SQLite
-  online backup API) for `toodoo-backup`; see
-  `docs/specs/backup-restore.md`.
+- `reconcile` — lists Engine users without a corresponding identity
+  here ("ghost users" from interrupted signups or
+  backup-consistency edges, see ADR 0004 and
+  `docs/specs/backup-restore.md`) and offers to complete or remove
+  them. Reads both sides via this socket and the Engine's admin
+  socket.
 
-Admin operations are logged (structured, see below) with the
-requesting UID from `SO_PEERCRED`.
+### backup.sock (`SocketGroup=toodoo-backup`, `SocketMode=0660`)
+
+Exactly one operation: stream a consistent snapshot of `auth.sqlite`
+(SQLite online backup API) for the `toodoo-backup` CLI; see
+`docs/specs/backup-restore.md`. The split exists so backup automation
+(the systemd timer runs with `SupplementaryGroups=toodoo-backup`)
+never holds user-management powers, and app admins don't implicitly
+get bulk export. See ADR 0006 for the rationale.
+
+Every operation on either socket is logged (structured, see below)
+with the caller's UID and resolved username from `SO_PEERCRED` —
+kernel-verified, not client-claimed. Root retains implicit access to
+both sockets (file permissions never bind root).
 
 ## Cross-Service RPCs (Authenticator → Engine)
 
@@ -368,7 +390,14 @@ TOODOO_EVENT=auth_failure | auth_success | invite_redeemed |
              invite_failure | session_revoked | admin_op
 TOODOO_CLIENT_IP=<ip from PROXY header>
 TOODOO_HANDLE=<sanitized>
-MESSAGE=auth_failure handle=<sanitized> ip=<ip>
+```
+
+MESSAGE formats matched by fail2ban (versioned contract, anchored —
+see `docs/specs/fail2ban.md`):
+
+```
+auth_failure handle=<sanitized> ip=<ip>
+invite_failure ip=<ip>
 ```
 
 Sanitization: a handle is logged verbatim only if it matches the

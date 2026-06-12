@@ -6,7 +6,9 @@
 static assets are embedded in and served by the Authenticator (not the
 Listener, correcting `README.md`); PROXY protocol v2 client-IP
 propagation on the Listener→Authenticator socket; normative
-strip-before-inject rule for `X-Toodoo-*` headers.
+strip-before-inject rule for `X-Toodoo-*` headers; admin sockets are
+group-guarded (`toodoo-admin` / `toodoo-backup`) instead of
+root-only — see ADR 0006.
 **Related:** ADR 0002 (service isolation via systemd hardening),
 ADR 0004 (Authenticator owns its own datastore)
 
@@ -114,7 +116,9 @@ Step by step:
 4. **Engine** receives only cleartext HTTP from the Authenticator's
    Unix socket. It trusts the injected headers because:
    - Its socket is filesystem-permissioned to be reachable only by
-     the Authenticator's dynamic UID (and `root`, for the admin CLI).
+     the Authenticator's dynamic UID. (Admin operations use the
+     separate group-guarded admin sockets — see ADR 0006 — never
+     this socket.)
    - The systemd hardening profile (per ADR 0002) blocks any other
      process from interposing.
    - The Authenticator is the *only* code path that writes to that
@@ -247,10 +251,13 @@ ownership rules ahead of time. Details in
 - **Listener → TLS Signer socket**: created by Signer's `.socket`
   unit; `SocketGroup=toodoo-ipc-signer`; only the Listener is in
   that group.
-- **Admin sockets**: each of Authenticator and Engine exposes a
-  separate admin socket reachable only by `root`, used by the
-  `toodoo` host CLI for admin operations (create invite, disable
-  user, backup, restore). Never reachable from the network.
+- **Admin sockets** (see ADR 0006): each of Authenticator and Engine
+  exposes two additional sockets, guarded by static Unix groups
+  rather than root — `admin.sock` (`SocketGroup=toodoo-admin`,
+  `SocketMode=0660`) for user/invite/session management, and
+  `backup.sock` (`SocketGroup=toodoo-backup`) for snapshot streaming
+  only. Used by the `toodoo` host CLI; callers are identified and
+  logged via `SO_PEERCRED`. Never reachable from the network.
 
 The Engine's trust of the `X-Toodoo-User-Id` header rests entirely
 on the fact that only the Authenticator can connect to its main
