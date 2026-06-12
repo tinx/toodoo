@@ -1,0 +1,65 @@
+
+lists
+ - no version number?
+   - how do we do the locking for changes?
+   - how do clients notice that there's an updated title?
+
+list_members
+ - no version numbers. I guess it's just a relation so it could be rolled
+   into the list version. (if it had one)
+
+items
+ - text really limited to 4096 chars? Unnecessary limit.
+ - soft-delete becomes hard-delete after 30 days, but... why? Let's keep them.
+
+labels
+ - no version number? How do we do locking and client updates?
+
+item_labels
+ - no version number, I guess it's just a relation so it could be rolled
+   into the item version. Otherwise the client would have to poll for
+   label assignment changes?
+
+How do clients learn about new items and new lists? If they are supposed
+to "list all items" and "list all lists" periodically, this should be stated
+in the specs. Same for deletes, I guess?
+
+
+Admin socket requires local root access, which means the admin and the
+server root operator need to be the same person. In my experience server
+admins can rarely be bothered to also be application-level admins. Also,
+this would require frequent logins as root, which is always risky, e.g.
+because mistakes can be made. We should consider other options, such as
+a local non-root user or non-root Unix group. We could still work with
+filesystem permissions as our security boundary, but would not require
+root access.
+
+"reset password" action should disable non-web logins until the password
+has been changed. Using the admin-generated new password to initiate
+an MCP or CLI session should not work. (unless these clients have a way
+of enforcing an immediate password change before they provide any other
+functionality)
+
+How does logging with journald work? Does it require filesystem access?
+Is it a unix socket with an FD passed to the application? Is it a local
+network connection?  We want to lock down our services, so it's intereseting
+to understand the mechanisms here.
+
+Backup requires GPG key. Help the user create one. A script or a
+howto, for example
+
+I want non-backup admin operations to be possible via the web GUI. In
+small orgs, not everyone knows how to work with a Unix shell, so we would
+expect quite a bit of knowledge from, say, a secretary or volunteer
+admin.
+
+Initial certbot process uses port 80 because it is "assumed free". But
+that seems optimistic to me. Small org often have multi-purpose servers.
+We should consider other ways, but I'm not sure which ones. I don't know
+LE very well. And while we are at it, I don't think we can assume port
+443 to be free either. Maybe we should introduce a way to configure
+another port and/or run behind apache or nginx? Also, what if there
+is a cert for this server already? How does that work? Can we share
+it? What do other Ubuntu packages do in this situation?
+
+
